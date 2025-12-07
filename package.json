@@ -1,10 +1,11 @@
 {
   "scripts": {
-    "start": "node index.mjs"
+    "start": "node server.mjs 76ed350ecd607835ef86fbe3dcc9cb65"
   },
   "dependencies": {
     "@bjclopes/homebridge-ledstrip-bledom": "^1.7.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "ws": "^8.18.0"
   },
   "trustedDependencies": [
     "@abandonware/bluetooth-hci-socket",

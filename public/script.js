@@ -8,6 +8,10 @@ const presets = document.querySelectorAll('.preset-btn');
 let isPowered = true;
 let isSyncing = false;
 
+// --- WebSocket Setup ---
+const ws = new WebSocket(`ws://${window.location.host}`);
+ws.onopen = () => console.log("WebSocket Connected");
+
 // Utility: Hex to RGB
 function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -140,6 +144,51 @@ let videoElement = null;
 let canvasElement = null;
 let canvasContext = null;
 
+// Define processFrame at module level for proper recursive access
+function processFrame() {
+    if (!isSyncing || !videoElement) return;
+
+    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
+        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        const frameData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height).data;
+
+        // Pixel Sampling Loop to calculate r, g, b
+        let r = 0, g = 0, b = 0, count = 0;
+        const step = Math.max(4, Math.floor(frameData.length / 1000) * 4);
+
+        for (let i = 0; i < frameData.length; i += step) {
+            r += frameData[i];
+            g += frameData[i + 1];
+            b += frameData[i + 2];
+            count++;
+        }
+
+        if (count > 0) {
+            r = Math.floor(r / count);
+            g = Math.floor(g / count);
+            b = Math.floor(b / count);
+
+            // UPDATE UI
+            const hex = rgbToHex(r, g, b);
+            colorPicker.value = hex;
+            hexDisplay.innerText = hex.toUpperCase();
+            document.body.style.setProperty('--accent', hex);
+
+            // SEND TO SERVER
+            if (ws.readyState === WebSocket.OPEN) {
+                // Send via WS for low latency
+                ws.send(JSON.stringify({ type: 'color', r, g, b }));
+            } else {
+                // Fallback to HTTP if WS is down
+                debouncedSetColor(r, g, b);
+            }
+        }
+    }
+
+    // Sync at ~20 FPS (50ms) to balance smoothness vs BLE load
+    setTimeout(() => requestAnimationFrame(processFrame), 50);
+}
+
 async function startScreenSync() {
     try {
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -149,13 +198,12 @@ async function startScreenSync() {
 
         videoElement = document.createElement('video');
         videoElement.srcObject = stream;
-        videoElement.muted = true; // Required for autoplay policy
+        videoElement.muted = true;
         videoElement.playsInline = true;
 
         canvasElement = document.createElement('canvas');
         canvasContext = canvasElement.getContext('2d', { willReadFrequently: true });
 
-        // Wait for video metadata to load before starting
         videoElement.onloadedmetadata = async () => {
             canvasElement.width = videoElement.videoWidth || 100;
             canvasElement.height = videoElement.videoHeight || 100;
@@ -172,45 +220,8 @@ async function startScreenSync() {
             screenSyncBtn.classList.add('active');
             screenSyncBtn.innerHTML = '<span class="icon">🔴</span> Stop Syncing';
 
+            // Start the animation loop
             processFrame();
-        };
-
-        const processFrame = () => {
-            if (!isSyncing || !videoElement) return;
-
-            const isVideoReady = videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
-
-            if (isVideoReady) {
-                canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-                const frameData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height).data;
-
-                let r = 0, g = 0, b = 0, count = 0;
-
-                // Sample pixels for average color
-                const step = Math.max(4, Math.floor(frameData.length / 1000) * 4); // Sample ~1000 pixels
-                for (let i = 0; i < frameData.length; i += step) {
-                    r += frameData[i];
-                    g += frameData[i + 1];
-                    b += frameData[i + 2];
-                    count++;
-                }
-
-                if (count > 0) {
-                    r = Math.floor(r / count);
-                    g = Math.floor(g / count);
-                    b = Math.floor(b / count);
-
-                    const hex = rgbToHex(r, g, b);
-                    colorPicker.value = hex;
-                    hexDisplay.innerText = hex.toUpperCase();
-                    document.body.style.setProperty('--accent', hex);
-
-                    debouncedSetColor(r, g, b);
-                }
-            }
-
-            // Use setTimeout for more consistent timing (~30fps)
-            setTimeout(() => requestAnimationFrame(processFrame), 33);
         };
 
         stream.getVideoTracks()[0].onended = () => {
@@ -219,7 +230,6 @@ async function startScreenSync() {
 
     } catch (err) {
         console.error("Error starting screen sync:", err);
-        alert("Could not start screen capture.");
     }
 }
 
