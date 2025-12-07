@@ -3,7 +3,8 @@
     "start": "node index.mjs"
   },
   "dependencies": {
-    "@bjclopes/homebridge-ledstrip-bledom": "^1.7.2"
+    "@bjclopes/homebridge-ledstrip-bledom": "^1.7.2",
+    "express": "^5.2.1"
   },
   "trustedDependencies": [
     "@abandonware/bluetooth-hci-socket",

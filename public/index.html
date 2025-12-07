@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luminescence</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Luminescence</h1>
+            <div class="status-indicator" id="connectionStatus">Connected</div>
+        </header>
+
+        <main>
+            <!-- Power Button -->
+            <div class="control-group power-group">
+                <button id="powerBtn" class="power-btn active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                        <line x1="12" y1="2" x2="12" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Color Picker -->
+            <div class="control-group color-group">
+                <label>Color</label>
+                <input type="color" id="colorPicker" value="#ff0000">
+                <div class="hex-display" id="hexDisplay">#FF0000</div>
+            </div>
+
+            <!-- Brightness Slider -->
+            <div class="control-group slider-group">
+                <label>Brightness</label>
+                <input type="range" id="brightnessSlider" min="0" max="100" value="100">
+                <div class="value-display" id="brightnessValue">100%</div>
+            </div>
+
+            <!-- Presets -->
+            <div class="control-group presets-group">
+                <label>Presets</label>
+                <div class="presets">
+                    <button class="preset-btn" style="background-color: #ff0000;" data-color="#ff0000"></button>
+                    <button class="preset-btn" style="background-color: #00ff00;" data-color="#00ff00"></button>
+                    <button class="preset-btn" style="background-color: #0000ff;" data-color="#0000ff"></button>
+                    <button class="preset-btn" style="background-color: #ff00ff;" data-color="#ff00ff"></button>
+                    <button class="preset-btn" style="background-color: #00ffff;" data-color="#00ffff"></button>
+                    <button class="preset-btn" style="background: linear-gradient(45deg, #ff0000, #0000ff);"
+                        id="cycleBtn">🌈</button>
+                </div>
+            </div>
+
+            <!-- Screen Sync -->
+            <div class="control-group">
+                <button id="screenSyncBtn" class="sync-btn">
+                    <span class="icon">🖥️</span> Start Screen Sync
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

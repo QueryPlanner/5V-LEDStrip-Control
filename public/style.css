@@ -1,0 +1,246 @@
+:root {
+    --bg-color: #0f0f13;
+    --card-bg: rgba(30, 30, 35, 0.6);
+    --primary: #ffffff;
+    --accent: #646cff;
+    /* dynamic based on color? */
+    --text: #ffffff;
+    --text-dim: #888888;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Background Ambient Glow */
+body::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(100, 108, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: -1;
+}
+
+.app-container {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.status-indicator {
+    font-size: 0.75rem;
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+/* Power Button */
+.power-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.power-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.power-btn.active {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.power-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Color Picker */
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 100%;
+    height: 60px;
+    border-radius: 12px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.hex-display {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    font-family: monospace;
+}
+
+/* Slider */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    margin-top: -8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.value-display {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: -5px;
+}
+
+/* Presets */
+.presets {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.preset-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.preset-btn:hover {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Sync Button */
+.sync-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.sync-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sync-btn.active {
+    background: rgba(100, 108, 255, 0.3);
+    border-color: #646cff;
+    color: #fff;
+}
+
+.sync-btn.active .icon {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
