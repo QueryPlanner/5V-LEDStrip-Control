@@ -146,47 +146,63 @@ let canvasContext = null;
 
 // Define processFrame at module level for proper recursive access
 function processFrame() {
-    if (!isSyncing || !videoElement) return;
-
-    if (videoElement.readyState >= videoElement.HAVE_CURRENT_DATA) {
-        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-        const frameData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height).data;
-
-        // Pixel Sampling Loop to calculate r, g, b
-        let r = 0, g = 0, b = 0, count = 0;
-        const step = Math.max(4, Math.floor(frameData.length / 1000) * 4);
-
-        for (let i = 0; i < frameData.length; i += step) {
-            r += frameData[i];
-            g += frameData[i + 1];
-            b += frameData[i + 2];
-            count++;
-        }
-
-        if (count > 0) {
-            r = Math.floor(r / count);
-            g = Math.floor(g / count);
-            b = Math.floor(b / count);
-
-            // UPDATE UI
-            const hex = rgbToHex(r, g, b);
-            colorPicker.value = hex;
-            hexDisplay.innerText = hex.toUpperCase();
-            document.body.style.setProperty('--accent', hex);
-
-            // SEND TO SERVER
-            if (ws.readyState === WebSocket.OPEN) {
-                // Send via WS for low latency
-                ws.send(JSON.stringify({ type: 'color', r, g, b }));
-            } else {
-                // Fallback to HTTP if WS is down
-                debouncedSetColor(r, g, b);
-            }
-        }
+    // Guard: stop if no longer syncing or video element is gone
+    if (!isSyncing) {
+        console.log('processFrame: isSyncing is false, stopping loop');
+        return;
+    }
+    if (!videoElement) {
+        console.log('processFrame: videoElement is null, stopping loop');
+        return;
     }
 
-    // Sync at ~20 FPS (50ms) to balance smoothness vs BLE load
-    setTimeout(() => requestAnimationFrame(processFrame), 50);
+    try {
+        const isVideoReady = videoElement.readyState >= videoElement.HAVE_CURRENT_DATA;
+
+        if (isVideoReady) {
+            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            const frameData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height).data;
+
+            // Pixel Sampling Loop to calculate r, g, b
+            let r = 0, g = 0, b = 0, count = 0;
+            const step = Math.max(4, Math.floor(frameData.length / 1000) * 4);
+
+            for (let i = 0; i < frameData.length; i += step) {
+                r += frameData[i];
+                g += frameData[i + 1];
+                b += frameData[i + 2];
+                count++;
+            }
+
+            if (count > 0) {
+                r = Math.floor(r / count);
+                g = Math.floor(g / count);
+                b = Math.floor(b / count);
+
+                // UPDATE UI
+                const hex = rgbToHex(r, g, b);
+                colorPicker.value = hex;
+                hexDisplay.innerText = hex.toUpperCase();
+                document.body.style.setProperty('--accent', hex);
+
+                // SEND TO SERVER
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'color', r, g, b }));
+                } else {
+                    console.warn('WebSocket not open, using HTTP fallback');
+                    debouncedSetColor(r, g, b);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('processFrame error (continuing loop):', err);
+    }
+
+    // ALWAYS schedule next frame if still syncing (outside try-catch)
+    // Use 150ms interval (~7 FPS) to give BLE enough time to process commands
+    if (isSyncing) {
+        setTimeout(() => requestAnimationFrame(processFrame), 150);
+    }
 }
 
 async function startScreenSync() {

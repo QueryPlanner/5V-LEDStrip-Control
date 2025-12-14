@@ -46,9 +46,32 @@ app.use(express.static(join(__dirname, 'public')));
 // --- Concurrency Control ---
 let isBusy = false; // Prevent BLE command flooding
 let lastUpdateTime = 0;
+let lastColor = { r: -1, g: -1, b: -1 }; // Track last sent color to avoid redundant writes
+
+const MIN_UPDATE_INTERVAL_MS = 100; // Minimum time between BLE writes
+
+function colorsAreSimilar(r1, g1, b1, r2, g2, b2, threshold = 20) {
+    const deltaR = Math.abs(r1 - r2);
+    const deltaG = Math.abs(g1 - g2);
+    const deltaB = Math.abs(b1 - b2);
+    return deltaR <= threshold && deltaG <= threshold && deltaB <= threshold;
+}
 
 async function safeSetColor(r, g, b) {
     const now = Date.now();
+
+    // Throttle: Skip if we're updating too fast
+    const timeSinceLastUpdate = now - lastUpdateTime;
+    if (timeSinceLastUpdate < MIN_UPDATE_INTERVAL_MS) {
+        console.log(`Throttled: Only ${timeSinceLastUpdate}ms since last update`);
+        return;
+    }
+
+    // Skip if color is nearly identical to last sent color (reduces BLE traffic)
+    if (colorsAreSimilar(r, g, b, lastColor.r, lastColor.g, lastColor.b)) {
+        console.log(`Skipping similar color: (${r}, ${g}, ${b})`);
+        return;
+    }
 
     // Safety Force Reset: If stuck for > 1 second, force free
     if (isBusy && (now - lastUpdateTime > 1000)) {
@@ -73,8 +96,16 @@ async function safeSetColor(r, g, b) {
             new Promise((_, reject) => setTimeout(() => reject(new Error("BLE Timeout")), 500))
         ]);
 
+        // CRITICAL: Add mandatory delay for LED hardware to process the command
+        // BLEDOM devices need time between writes to reliably update
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Update last color only on success
+        lastColor = { r, g, b };
+        console.log(`✓ Color applied successfully`);
+
     } catch (e) {
-        console.error("BLE Error:", e);
+        console.error("BLE Error:", e.message || e);
     } finally {
         isBusy = false;
     }
